@@ -41,6 +41,66 @@
 				offset: 100
 			});
 
+	// Lazy Load Images
+	const lazyLoadImages = () => {
+		const imageObserver = new IntersectionObserver((entries, observer) => {
+			entries.forEach(entry => {
+				if (entry.isIntersecting) {
+					const img = entry.target;
+					
+					// Handle background images
+					if (img.dataset.background) {
+						img.style.backgroundImage = `url(${img.dataset.background})`;
+					}
+					// Handle regular images
+					else {
+						const src = img.dataset.src;
+						if (src) {
+							img.src = src;
+							if (img.dataset.srcset) {
+								img.srcset = img.dataset.srcset;
+							}
+						}
+					}
+					
+					// Remove observer after loading
+					observer.unobserve(img);
+					
+					// Add loaded class for fade-in effect
+					img.classList.add('lazy-loaded');
+				}
+			});
+		}, {
+			rootMargin: '50px 0px', // Start loading 50px before the image enters viewport
+			threshold: 0.01
+		});
+
+		// Observe all images with data-src attribute
+		document.querySelectorAll('img[data-src], .image[data-background]').forEach(img => {
+			imageObserver.observe(img);
+		});
+	};
+
+	// Initialize lazy loading
+	if ('IntersectionObserver' in window) {
+		$window.on('load', lazyLoadImages);
+	} else {
+		// Fallback for browsers that don't support IntersectionObserver
+		$window.on('load', function() {
+			document.querySelectorAll('img[data-src], .image[data-background]').forEach(img => {
+				if (img.dataset.background) {
+					img.style.backgroundImage = `url(${img.dataset.background})`;
+				} else {
+					img.src = img.dataset.src;
+					if (img.dataset.srcset) {
+						img.srcset = img.dataset.srcset;
+					}
+				}
+				img.classList.add('lazy-loaded');
+			});
+		});
+	}
+
 	// Polyfill: Object fit.
 		if (!browser.canUse('object-fit')) {
 
